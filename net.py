@@ -42,18 +42,18 @@ class Generator(chainer.Chain):
     def __call__(self, z, test=False):
         # print("z:", z.shape)
         # Deconvolution2Dによって入力ベクトルをCIFAR-10の画像サイズに変換
-        h = F.relu(self.bn0(self.l0(z), test=test))  # (n, 512*4*4)
-        # print("h0:", h.shape)
-        h = F.reshape(h, (z.data.shape[0], self.ch, self.bottom_width, self.bottom_width))  # (n, 512, 4, 4)
-        # print("h1:", h.shape)
-        h = F.relu(self.bn1(self.dc1(h), test=test))  # (n, 256, 8, 8)
-        # print("h2:", h.shape)
-        h = F.relu(self.bn2(self.dc2(h), test=test))  # (n, 128, 16, 16)
-        # print("h3:", h.shape)
-        h = F.relu(self.bn3(self.dc3(h), test=test))  # (n, 64, 32, 32)
-        # print("h4:", h.shape)
-        x = F.sigmoid(self.dc4(h))                    # (n, 3, 32, 32) = CIFAR-10のサイズ
-        # print("x:", x.shape)
+        h = F.relu(self.bn0(self.l0(z), test=test))
+        # print("h0:", h.shape)  # (n, 512*4*4)
+        h = F.reshape(h, (z.data.shape[0], self.ch, self.bottom_width, self.bottom_width))
+        # print("h1:", h.shape)  # (n, 512, 4, 4)
+        h = F.relu(self.bn1(self.dc1(h), test=test))
+        # print("h2:", h.shape)  # (n, 256, 8, 8)
+        h = F.relu(self.bn2(self.dc2(h), test=test))
+        # print("h3:", h.shape)  # (n, 128, 16, 16)
+        h = F.relu(self.bn3(self.dc3(h), test=test))
+        # print("h4:", h.shape)  # (n, 64, 32, 32)
+        x = F.sigmoid(self.dc4(h))
+        # print("x:", x.shape)   # (n, 3, 32, 32) = CIFAR-10のサイズ
         return x
 
 
@@ -80,12 +80,24 @@ class Discriminator(chainer.Chain):
         )
 
     def __call__(self, x, test=False):
+        print("x:", x.shape)  # (n, 3, 32, 32)
         h = add_noise(x, test=test)
+        print("h0:", h.shape)  # (n, 3, 32, 32)
         h = F.leaky_relu(add_noise(self.c0_0(h), test=test))
+        print("h1:", h.shape)  # (n, 64, 32, 32)
         h = F.leaky_relu(add_noise(self.bn0_1(self.c0_1(h), test=test), test=test))
+        print("h2:", h.shape)  # (n, 128, 16, 16)
         h = F.leaky_relu(add_noise(self.bn1_0(self.c1_0(h), test=test), test=test))
+        print("h3:", h.shape)  # (n, 128, 16, 16)
         h = F.leaky_relu(add_noise(self.bn1_1(self.c1_1(h), test=test), test=test))
+        print("h4:", h.shape)  # (n, 256, 8, 8)
         h = F.leaky_relu(add_noise(self.bn2_0(self.c2_0(h), test=test), test=test))
+        print("h5:", h.shape)  # (n, 256, 8, 8)
         h = F.leaky_relu(add_noise(self.bn2_1(self.c2_1(h), test=test), test=test))
+        print("h6:", h.shape)  # (n, 512, 4, 4)
         h = F.leaky_relu(add_noise(self.bn3_0(self.c3_0(h), test=test), test=test))
-        return self.l4(h)
+        print("h7:", h.shape)  # (n, 512, 4, 4)
+        y = self.l4(h)
+        print("y:", y.shape)   # (n, 1)
+
+        return y
