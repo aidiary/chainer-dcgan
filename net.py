@@ -40,13 +40,20 @@ class Generator(chainer.Chain):
         return np.random.uniform(-1, 1, (batchsize, self.n_hidden, 1, 1)).astype(np.float32)
 
     def __call__(self, z, test=False):
+        # print("z:", z.shape)
         # Deconvolution2Dによって入力ベクトルをCIFAR-10の画像サイズに変換
-        h = F.reshape(F.relu(self.bn0(self.l0(z), test=test)),
-                      (z.data.shape[0], self.ch, self.bottom_width, self.bottom_width))  # (n, 4, 4, 512)
+        h = F.relu(self.bn0(self.l0(z), test=test))  # (n, 512*4*4)
+        # print("h0:", h.shape)
+        h = F.reshape(h, (z.data.shape[0], self.ch, self.bottom_width, self.bottom_width))  # (n, 512, 4, 4)
+        # print("h1:", h.shape)
         h = F.relu(self.bn1(self.dc1(h), test=test))  # (n, 256, 8, 8)
+        # print("h2:", h.shape)
         h = F.relu(self.bn2(self.dc2(h), test=test))  # (n, 128, 16, 16)
+        # print("h3:", h.shape)
         h = F.relu(self.bn3(self.dc3(h), test=test))  # (n, 64, 32, 32)
+        # print("h4:", h.shape)
         x = F.sigmoid(self.dc4(h))                    # (n, 3, 32, 32) = CIFAR-10のサイズ
+        # print("x:", x.shape)
         return x
 
 
