@@ -26,10 +26,10 @@ class Generator(chainer.Chain):
         super(Generator, self).__init__(
             l0=L.Linear(self.n_hidden, bottom_width * bottom_width * ch, initialW=w),
             # //は返り値が整数になる割り算
-            dc1=L.Deconvolution2D(ch, ch // 2, 4, 2, 1, initialW=w),
-            dc2=L.Deconvolution2D(ch // 2, ch // 4, 4, 2, 1, initialW=w),
-            dc3=L.Deconvolution2D(ch // 4, ch // 8, 4, 2, 1, initialW=w),
-            dc4=L.Deconvolution2D(ch // 8, 3, 3, 1, 1, initialW=w),
+            dc1=L.Deconvolution2D(ch, ch // 2, ksize=4, stride=2, pad=1, initialW=w),
+            dc2=L.Deconvolution2D(ch // 2, ch // 4, ksize=4, stride=2, pad=1, initialW=w),
+            dc3=L.Deconvolution2D(ch // 4, ch // 8, ksize=4, stride=2, pad=1, initialW=w),
+            dc4=L.Deconvolution2D(ch // 8, 3, ksize=3, stride=1, pad=1, initialW=w),
             bn0=L.BatchNormalization(bottom_width * bottom_width * ch),
             bn1=L.BatchNormalization(ch // 2),
             bn2=L.BatchNormalization(ch // 4),
@@ -42,11 +42,11 @@ class Generator(chainer.Chain):
     def __call__(self, z, test=False):
         # Deconvolution2Dによって入力ベクトルをCIFAR-10の画像サイズに変換
         h = F.reshape(F.relu(self.bn0(self.l0(z), test=test)),
-                      (z.data.shape[0], self.ch, self.bottom_width, self.bottom_width))
-        h = F.relu(self.bn1(self.dc1(h), test=test))
-        h = F.relu(self.bn2(self.dc2(h), test=test))
-        h = F.relu(self.bn3(self.dc3(h), test=test))
-        x = F.sigmoid(self.dc4(h))
+                      (z.data.shape[0], self.ch, self.bottom_width, self.bottom_width))  # (n, 4, 4, 512)
+        h = F.relu(self.bn1(self.dc1(h), test=test))  # (n, 256, 8, 8)
+        h = F.relu(self.bn2(self.dc2(h), test=test))  # (n, 128, 16, 16)
+        h = F.relu(self.bn3(self.dc3(h), test=test))  # (n, 64, 32, 32)
+        x = F.sigmoid(self.dc4(h))                    # (n, 3, 32, 32) = CIFAR-10のサイズ
         return x
 
 
