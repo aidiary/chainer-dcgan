@@ -11,6 +11,8 @@ from updater import DCGANUpdater
 from visualize import out_generated_image
 
 
+# TODO: MNISTの例を追加
+#
 def main():
     parser = argparse.ArgumentParser(description='Chainer example: DCGAN')
     parser.add_argument('--batchsize', '-b', type=int, default=50,
@@ -65,8 +67,10 @@ def main():
         train, _ = chainer.datasets.get_cifar10(withlabel=False, scale=255.)
         # print(train.shape)
     else:
-        # TODO: implement
-        pass
+        all_files = os.listdir(args.dataset)
+        image_files = [f for f in all_files if ('png' in f or 'jpg' in f)]
+        print('{} contains {} image files'.format(args.dataset, len(image_files)))
+        train = chainer.datasets.ImageDataset(paths=image_files, root=args.dataset)
 
     train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
 
@@ -80,7 +84,6 @@ def main():
 
     snapshot_interval = (args.snapshot_interval, 'iteration')
     display_interval = (args.display_interval, 'iteration')
-    # TODO: 中カッコは何？
     trainer.extend(
         extensions.snapshot(filename='snapshot_iter_{.updater.iteration}.npz'),
         trigger=snapshot_interval)
