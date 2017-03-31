@@ -11,16 +11,28 @@ class DCGANUpdater(chainer.training.StandardUpdater):
 
     def loss_dis(self, dis, y_fake, y_real):
         batchsize = y_fake.data.shape[0]
+
+        # TODO: softmaxではなくsoftplusを使うメリットは？
+
+        # disにとってはy_fake（偽物を入れたときのdisの出力）は小さいほどよい
+        # disにとってはy_real（本物を入れたときのdisの出力）は大きいほどよい
+        # y_realが大きいほど損失L1は小さくなる
         L1 = F.sum(F.softplus(-y_real)) / batchsize
         L2 = F.sum(F.softplus(y_fake)) / batchsize
         loss = L1 + L2
         chainer.report({'loss': loss}, dis)
+
         return loss
 
     def loss_gen(self, gen, y_fake):
         batchsize = y_fake.data.shape[0]
+
+        # genにとってはy_fake (偽物を入れたときのdisの出力)は
+        # 大きいほどよい（= 本物だとだませた）
+        # y_fakeが大きいほどlossは小さくなる
         loss = F.sum(F.softplus(-y_fake)) / batchsize
         chainer.report({'loss': loss}, gen)
+
         return loss
 
     def update_core(self):
@@ -35,6 +47,8 @@ class DCGANUpdater(chainer.training.StandardUpdater):
         batchsize = len(batch)
 
         # 訓練データを入力したときのDの出力
+        # この出力は本物のを入れたとき大きくなり、偽物を入れたとき小さくなるとよい
+        # 入力が本物である確率ではない（softmaxではなくsoftplusを使っているため）
         y_real = dis(x_real, test=False)
 
         # Gが生成したデータを入力したときのDの出力
